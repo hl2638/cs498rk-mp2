@@ -20,7 +20,7 @@ function ListView() {
             .then(response => {
                 console.log("233");
             });
-        // TODO: use API to load actually pokemon list
+        // TODO: use API to load actual pokemon list
         return [{name: "pokemon1", id:1}, {name: "pokemon2", id:2}];
     }
 
