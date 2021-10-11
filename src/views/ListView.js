@@ -4,7 +4,7 @@ import {capitalizeFirstLetter} from "../utils";
 // import './App.scss';
 import axios from "axios";
 
-function ListView({pokemonList}) {
+function ListView({pokemonList, pokemonIdMap}) {
     // const [pokemonList, setPokemonList] = useState([]);
     const sortByValues = {
         ID: "id",

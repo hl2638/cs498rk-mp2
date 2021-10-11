@@ -7,11 +7,15 @@ import {capitalizeFirstLetter} from "../utils";
 
 import axios from "axios";
 
-function GalleryView({pokemonList}) {
-    const [typeList, setTypeList] = useState([]);
+function GalleryView({pokemonList, pokemonIdMap}) {
+    // const [typeList, setTypeList] = useState([]);
     const [filterKeyword, setFilterKeyword] = useState("all");
     const [filteredPokemonList, setFilteredPokemonList] = useState(pokemonList);
     const [pokemonListByType, setPokemonListByType] = useState(new Map());
+
+    const typeList = ["All", "Normal", "Fighting", "Flying", "Poison", "Ground", "Rock",
+        "Bug", "Ghost", "Steel", "Fire", "Water", "Grass", "Electric", "Psychic", "Ice",
+        "Dragon", "Dark"];
 
     const updatePokemonListByType = (k, v) =>{
         setPokemonListByType(new Map(pokemonListByType.set(k,v)));
@@ -22,12 +26,12 @@ function GalleryView({pokemonList}) {
         return parseInt(splittedUrl[splittedUrl.length-2]);
     }
 
-    useEffect(() =>{
-        axios.get(`https://pokeapi.co/api/v2/type/`).then(
-            response => {
-                setTypeList(['All', ...response.data.results.map( type => capitalizeFirstLetter(type.name) )]);
-            });
-    }, []);
+    // useEffect(() =>{
+    //     axios.get(`https://pokeapi.co/api/v2/type/`).then(
+    //         response => {
+    //             setTypeList(['All', ...response.data.results.map( type => capitalizeFirstLetter(type.name) )]);
+    //         });
+    // }, []);
     // console.log("typelist ", typeList);
 
     useEffect(() =>{
@@ -40,7 +44,8 @@ function GalleryView({pokemonList}) {
             }else{
                 axios.get(`https://pokeapi.co/api/v2/type/${filterKeyword}`)
                     .then(response => {
-                        console.log(response.data.pokemon);
+                        // console.log(response.data.pokemon);
+                        console.log("pokemonidmap", pokemonIdMap);
                         const filteredListByType = response.data.pokemon.filter(pokemon => {
                             return pokemonIdMap.has(getId(pokemon));
                         }).map(pokemon =>{
@@ -53,6 +58,30 @@ function GalleryView({pokemonList}) {
             }
         }
     }, [filterKeyword, pokemonList, pokemonIdMap]);
+
+    // useEffect(() =>{
+    //     if(filterKeyword === "all"){
+    //         setFilteredPokemonList(pokemonList);
+    //     }else{
+    //         if(pokemonListByType.has(filterKeyword)){
+    //             console.log("has ", filterKeyword);
+    //             setFilteredPokemonList(pokemonListByType);
+    //         }else{
+    //             axios.get(`https://pokeapi.co/api/v2/type/${filterKeyword}`)
+    //                 .then(response => {
+    //                     console.log(response.data.pokemon);
+    //                     const filteredListByType = response.data.pokemon.filter(pokemon => {
+    //                         return pokemonIdMap.has(getId(pokemon));
+    //                     }).map(pokemon =>{
+    //                         return pokemonIdMap.get(getId(pokemon));
+    //                     });
+    //                     setFilteredPokemonList(filteredListByType);
+    //                     updatePokemonListByType(filterKeyword, filteredListByType);
+    //                     console.log("filterkeyword ", filterKeyword, "filteredtypebytype", filteredListByType);
+    //                 })
+    //         }
+    //     }
+    // }, [filterKeyword, pokemonList, pokemonIdMap]);
     // console.log("filtered ", filteredPokemonList, "filterkeyword", filterKeyword);
 
     // TODO: list pokemons

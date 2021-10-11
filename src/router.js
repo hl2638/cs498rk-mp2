@@ -5,7 +5,7 @@ import {
     Route,
     Link
 } from "react-router-dom";
-import {useState, useEffect} from "react";
+import {useState, useEffect, useMemo} from "react";
 import ListView from "./views/ListView"
 import GalleryView from "./views/GalleryView";
 import DetailView from "./views/DetailView";
@@ -14,12 +14,8 @@ import axios from "axios";
 
 
 function MyRouter() {
-    const [pokemonIdMap, setPokemonIdMap] = useState(new Map());
     const [pokemonList, setPokemonList] = useState([]);
 
-    const updatePokemonIdMap = (k,v) =>{
-        setPokemonIdMap(new Map(pokemonIdMap.set(k,v)));
-    }
 
     /* Get pokemon list.*/
     useEffect(() => {
@@ -36,20 +32,24 @@ function MyRouter() {
                         imgUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
                     }
                 }));
-                response.data.results.forEach(pokemon => {
-                    const splittedUrl = pokemon.url.split('/');
-                    const id = parseInt(splittedUrl[splittedUrl.length-2]);
-                    updatePokemonIdMap(id, {
-                        id: id,
-                        name: capitalizeFirstLetter(pokemon.name),
-                        url: pokemon.url,
-                        imgUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
-                    });
-                });
             });
     }, []);
+    const pokemonIdMap = useMemo(() =>{
+        const result = new Map();
+        pokemonList.forEach(pokemon => {
+            const splittedUrl = pokemon.url.split('/');
+            const id = parseInt(splittedUrl[splittedUrl.length-2]);
+            result.set(id, {
+                id: id,
+                name: capitalizeFirstLetter(pokemon.name),
+                url: pokemon.url,
+                imgUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
 
-    // console.log("at router: ", pokemonList);
+            })
+        });
+    }, [pokemonList]);
+
+    console.log("pokemonIdMap", pokemonIdMap);
 
 
     return (
@@ -72,10 +72,10 @@ function MyRouter() {
                         <Redirect to="/list" />
                     </Route>
                     <Route path="/list">
-                        <ListView pokemonList={pokemonList} />
+                        <ListView pokemonList={pokemonList} pokemonIdMap = {pokemonIdMap} />
                     </Route>
                     <Route path="/gallery">
-                        <GalleryView pokemonList={pokemonList} />
+                        <GalleryView pokemonList={pokemonList} pokemonIdMap = {pokemonIdMap} />
                     </Route>
                     <Route path="/detail/:id">
                         <DetailView />
