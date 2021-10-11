@@ -8,12 +8,19 @@ import {capitalizeFirstLetter} from "../utils";
 import axios from "axios";
 
 function GalleryView({pokemonList}) {
-
-    console.log("pokemonlist ", pokemonList);
-
     const [typeList, setTypeList] = useState([]);
-    const [filterKeyword, setFilterKeyword] = useState("All");
-    const [filteredPokemonList, setFilteredPokemonList] = useState([]);
+    const [filterKeyword, setFilterKeyword] = useState("all");
+    const [filteredPokemonList, setFilteredPokemonList] = useState(pokemonList);
+    const [pokemonListByType, setPokemonListByType] = useState(new Map());
+
+    const updatePokemonListByType = (k, v) =>{
+        setPokemonListByType(new Map(pokemonListByType.set(k,v)));
+    }
+
+    const getId = pokemon =>{
+        const splittedUrl = pokemon.pokemon.url.split('/');
+        return parseInt(splittedUrl[splittedUrl.length-2]);
+    }
 
     useEffect(() =>{
         axios.get(`https://pokeapi.co/api/v2/type/`).then(
@@ -24,14 +31,29 @@ function GalleryView({pokemonList}) {
     // console.log("typelist ", typeList);
 
     useEffect(() =>{
-        if(filterKeyword === "All"){
-            console.log("=== all");
-            setFilteredPokemonList([...pokemonList]);
+        if(filterKeyword === "all"){
+            setFilteredPokemonList(pokemonList);
         }else{
-            setFilteredPokemonList(pokemonList.filter( pokemon => pokemon.type === filterKeyword));
+            if(pokemonListByType.has(filterKeyword)){
+                console.log("has ", filterKeyword);
+                setFilteredPokemonList(pokemonListByType);
+            }else{
+                axios.get(`https://pokeapi.co/api/v2/type/${filterKeyword}`)
+                    .then(response => {
+                        console.log(response.data.pokemon);
+                        const filteredListByType = response.data.pokemon.filter(pokemon => {
+                            return pokemonIdMap.has(getId(pokemon));
+                        }).map(pokemon =>{
+                            return pokemonIdMap.get(getId(pokemon));
+                        });
+                        setFilteredPokemonList(filteredListByType);
+                        updatePokemonListByType(filterKeyword, filteredListByType);
+                        console.log("filterkeyword ", filterKeyword, "filteredtypebytype", filteredListByType);
+                    })
+            }
         }
-    }, [filterKeyword]);
-    console.log("filtered ", filteredPokemonList, "filterkeyword", filterKeyword);
+    }, [filterKeyword, pokemonList, pokemonIdMap]);
+    // console.log("filtered ", filteredPokemonList, "filterkeyword", filterKeyword);
 
     // TODO: list pokemons
     // TODO: filter options
@@ -43,16 +65,16 @@ function GalleryView({pokemonList}) {
                     <div className="buttons">
                         {
                             typeList.map(type => {
-                                return <button type="button" onClick={()=> setFilterKeyword(type)} className="btn">{type}</button>
+                                return <button type="button" onClick={()=> setFilterKeyword(type.toLowerCase())} className="btn">{type}</button>
                             })
                         }
                     </div>
-                ))
+
             </header>
             <ul id="pokemonGalleryDisplayList" className="gallery-list">
                 {
                     filteredPokemonList.map(pokemon => (
-                        <div class="gallery-list-item" key={pokemon.id}>
+                        <div className="gallery-list-item" key={pokemon.id}>
                             <img src={pokemon.imgUrl} className="pokemon-image"/>
                         </div>
                     ))

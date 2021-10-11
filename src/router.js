@@ -14,15 +14,21 @@ import axios from "axios";
 
 
 function MyRouter() {
-
+    const [pokemonIdMap, setPokemonIdMap] = useState(new Map());
     const [pokemonList, setPokemonList] = useState([]);
+
+    const updatePokemonIdMap = (k,v) =>{
+        setPokemonIdMap(new Map(pokemonIdMap.set(k,v)));
+    }
+
     /* Get pokemon list.*/
     useEffect(() => {
-        axios.get(`https://pokeapi.co/api/v2/pokemon?limit=100`)
+        axios.get(`https://pokeapi.co/api/v2/pokemon?limit=898`)
             .then(response => {
                 let listWithPics = response.data.results;
-                setPokemonList(listWithPics.map( (pokemon, index) => {
-                    const id = index+1;
+                setPokemonList(listWithPics.map( (pokemon) => {
+                    const splittedUrl = pokemon.url.split('/');
+                    const id = parseInt(splittedUrl[splittedUrl.length-2]);
                     return {
                         id: id,
                         name: capitalizeFirstLetter(pokemon.name),
@@ -30,6 +36,16 @@ function MyRouter() {
                         imgUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
                     }
                 }));
+                response.data.results.forEach(pokemon => {
+                    const splittedUrl = pokemon.url.split('/');
+                    const id = parseInt(splittedUrl[splittedUrl.length-2]);
+                    updatePokemonIdMap(id, {
+                        id: id,
+                        name: capitalizeFirstLetter(pokemon.name),
+                        url: pokemon.url,
+                        imgUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+                    });
+                });
             });
     }, []);
 
@@ -56,10 +72,10 @@ function MyRouter() {
                         <Redirect to="/list" />
                     </Route>
                     <Route path="/list">
-                        <ListView pokemonList={pokemonList}/>
+                        <ListView pokemonList={pokemonList} />
                     </Route>
                     <Route path="/gallery">
-                        <GalleryView pokemonList={pokemonList}/>
+                        <GalleryView pokemonList={pokemonList} />
                     </Route>
                     <Route path="/detail/:id">
                         <DetailView />
