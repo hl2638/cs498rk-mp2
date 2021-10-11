@@ -5,11 +5,37 @@ import {
     Route,
     Link
 } from "react-router-dom";
+import {useState, useEffect} from "react";
 import ListView from "./views/ListView"
 import GalleryView from "./views/GalleryView";
 import DetailView from "./views/DetailView";
+import {capitalizeFirstLetter} from "./utils";
+import axios from "axios";
 
-export default function router() {
+
+function MyRouter() {
+
+    const [pokemonList, setPokemonList] = useState([]);
+    /* Get pokemon list.*/
+    useEffect(() => {
+        axios.get(`https://pokeapi.co/api/v2/pokemon?limit=100`)
+            .then(response => {
+                let listWithPics = response.data.results;
+                setPokemonList(listWithPics.map( (pokemon, index) => {
+                    const id = index+1;
+                    return {
+                        id: id,
+                        name: capitalizeFirstLetter(pokemon.name),
+                        url: pokemon.url,
+                        imgUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+                    }
+                }));
+            });
+    }, []);
+
+    // console.log("at router: ", pokemonList);
+
+
     return (
         <Router>
             <div>
@@ -24,22 +50,16 @@ export default function router() {
 
                 <hr />
 
-                {/*
-          A <Switch> looks through all its children <Route>
-          elements and renders the first one whose path
-          matches the current URL. Use a <Switch> any time
-          you have multiple routes, but you want only one
-          of them to render at a time
-        */}
+
                 <Switch>
                     <Route exact path="/">
                         <Redirect to="/list" />
                     </Route>
                     <Route path="/list">
-                        <ListView />
+                        <ListView pokemonList={pokemonList}/>
                     </Route>
                     <Route path="/gallery">
-                        <GalleryView />
+                        <GalleryView pokemonList={pokemonList}/>
                     </Route>
                     <Route path="/detail/:id">
                         <DetailView />
@@ -50,6 +70,6 @@ export default function router() {
     );
 }
 
-// You can think of these components as "pages"
-// in your app.
+export default MyRouter;
+
 

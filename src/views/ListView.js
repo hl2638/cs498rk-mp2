@@ -1,62 +1,69 @@
-import React from "react";
-
+import React, {useState, useEffect} from "react";
+import {capitalizeFirstLetter} from "../utils";
 // import logo from './logo.svg';
 // import './App.scss';
+import axios from "axios";
 
+function ListView({pokemonList}) {
+    // const [pokemonList, setPokemonList] = useState([]);
+    const sortByValues = {
+        ID: "id",
+        NAME: "name"
+    };
+    const sortOrderValues = {
+        ASC: "asc",
+        DESC: "desc"
+    };
+    const [filteredPokemonList, setFilteredPokemonList] = useState([]);
+    const [filterKeyword, setFilterKeyword] = useState("");
+    const [sortBy, setSortBy] = useState(sortByValues.ID);
+    const [sortOrder, setSortOrder] = useState(sortOrderValues.ASC);
 
-function ListView() {
-    const axios = require("axios");
-
-    function loadPokemons(){
-        console.log('running loadPokemons...');
-        // for(let i=1; i<=5; i++){
-        //     axios.get(`https://pokeapi.co/api/v2/pokemon/${i}`)
-        //         .then(response => {
-        //             // console.log(`i = ${i}`);
-        //             // console.log(response.data.name);
-        //         });
-        // }
-        axios.get(`https://pokeapi.co/api/v2/pokemon/1`)
-            .then(response => {
-                console.log("233");
-            });
-        // TODO: use API to load actual pokemon list
-        return [{name: "pokemon1", id:1}, {name: "pokemon2", id:2}];
+    function calcCompFunc(){
+        let compfunc;
+        if(sortBy === sortByValues.ID){
+            if(sortOrder === sortOrderValues.ASC){
+                compfunc = (a, b) => (a.id < b.id ? -1:1);
+            }else{
+                compfunc = (a, b) => (a.id > b.id ? -1:1);
+            }
+        }else if(sortBy === sortByValues.NAME){
+            if(sortOrder === sortOrderValues.ASC){
+                compfunc = (a, b) => (a.name < b.name ? -1:1);
+            }else{
+                compfunc = (a, b) => (a.name > b.name ? -1:1);
+            }
+        }
+        return compfunc;
     }
+
+    useEffect(() => {
+        const compfunc = calcCompFunc();
+        setFilteredPokemonList(pokemonList.filter( pokemon =>
+            pokemon.name.toLowerCase().includes(filterKeyword) || pokemon.id === parseInt(filterKeyword)
+        ).sort(compfunc));
+        console.log(filteredPokemonList);
+    }, [filterKeyword]);
+
+    useEffect(() =>{
+        const compfunc = calcCompFunc();
+        setFilteredPokemonList([...filteredPokemonList].sort(compfunc));
+        console.log(filteredPokemonList);
+    }, [sortBy, sortOrder]);
 
     function getSearchInput(e){
         const searchInput = e.target.value.trim().toLowerCase();
-        let filteredPokemons;
-        if(searchInput === "") {
-            filteredPokemons = [];
-        }else{
-            filteredPokemons = pokemonList.filter((pokemon) => {
-                // TODO: search filter rule tbd
-                return pokemon.name.toLowerCase().includes(searchInput) || pokemon.id === parseInt(searchInput);
-            });
-        }
-        // console.log(filteredPokemons);
-        displayPokemons(filteredPokemons);
+        setFilterKeyword(searchInput);
     }
 
-    function displayPokemons(pokemonList){
-        const pokemonDisplayList = document.getElementById("pokemonDisplayList");
-        // console.log(pokemonDisplayList);
-        const htmlString = pokemonList.map((pokemon) => {
-            return `
-            <li class="pokemon">
-                <h2>${pokemon.name}</h2>
-                <p>${pokemon.id} ${pokemon.name}</p>
-<!--                <img src="${pokemon.image}"></img>-->
-            </li>
-            `;
-        });
-        pokemonDisplayList.innerHTML = htmlString;
-
+    function changeSortBy(e){
+        const by = e.target.value;
+        setSortBy(by);
     }
-
-    let pokemonList = loadPokemons();
-    // let pokemonList = [];
+    function changeSortOrder(e){
+        const by = e.target.value;
+        setSortOrder(by);
+    }
 
     return (
         <div className="ListView">
@@ -67,12 +74,34 @@ function ListView() {
                         type="text"
                         name="searchBar"
                         id="searchBar"
-                        placeholder="search for a pokemon"
+                        placeholder="search pokemons by id(number) or name"
                         onKeyUp={getSearchInput}
                     />
+                    <label htmlFor="sortBy">Sort by:</label>
+                    <select id="sortBy" onChange={changeSortBy}>
+                        <option value={sortByValues.ID}>ID</option>
+                        <option value={sortByValues.NAME}>Name</option>
+                    </select>
+                    <div onChange={changeSortOrder}>
+                        <input type="radio" id="asc" name="sort-order" value={sortOrderValues.ASC} defaultChecked></input>
+                        <label htmlFor="asc">Ascending</label>
+                        <input type="radio" id="desc" name="sort-order" value={sortOrderValues.DESC}></input>
+                        <label htmlFor="desc">Descending</label>
+                    </div>
+
                 </div>
-                <ul id="pokemonDisplayList"></ul>
             </header>
+            <ul id="pokemonDisplayList" className="vertical-list">
+                {
+                    filteredPokemonList.map(pokemon => (
+                            <li key={pokemon.id}>
+                                <p>{pokemon.id} {pokemon.name}</p>
+                                <img src={pokemon.imgUrl} className="pokemon-image"/>
+                            </li>
+                        )
+                    )
+                }
+            </ul>
         </div>
     );
 }
